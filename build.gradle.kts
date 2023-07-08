@@ -2,26 +2,28 @@ plugins {
     kotlin("jvm") version "1.8.20"
     id("maven-publish")
     id("org.jetbrains.dokka") version "1.6.0"
+    java
     application
-
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 version = "1.0-SNAPSHOT"
 
 application {
-    mainClass.set("net.yakclient.components.minecraft")
-
-    applicationDefaultJvmArgs = listOf(
-        "-Xms512m",
-        "-Xmx4G",
-        "-XstartOnFirstThread",
-    )
+    mainClass="net.yakclient.client.MainKt"
 }
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(24, "hours")
 }
+
+val jarInclude by configurations.creating
+configurations {
+    implementation {
+        extendsFrom(jarInclude)
+    }
+}
+
 
 dependencies {
     implementation(kotlin("stdlib"))
@@ -51,7 +53,14 @@ dependencies {
     implementation("net.yakclient:common-util:1.0-SNAPSHOT") {
         isChanging = true
     }
+
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22")
+}
+
+tasks.shadowJar{
+    manifest {
+
+    }
 }
 
 task<Jar>("sourcesJar") {
@@ -64,14 +73,40 @@ task<Jar>("javadocJar") {
     from(tasks.dokkaJavadoc)
 }
 
+//tasks.jar {
+//    from(jarInclude.files) {
+//        into("/")
+//    }
+//
+//    println(jarInclude.files.joinToString(separator = " ") {
+//        "${it.name}"
+//    })
+//
+//    manifest {
+//        attributes(
+//                "Class-Path" to jarInclude.files.filter { it.name.contains("kotlin-stdlib-1.8.20.jar") } .joinToString(separator = " ") {
+//                    "${it.name}"
+//                },
+//                "Main-Class" to "net.yakclient.client.MainKt",
+//        )
+//    }
+//}
+
+
+//tasks.implementationJar {
+//    minimize()
+//}
+//
+
+
 publishing {
     publications {
         create<MavenPublication>("prod") {
-            from(components["java"])
+            artifact(tasks.shadowJar)
             artifact(tasks["sourcesJar"])
             artifact(tasks["javadocJar"])
 
-            artifactId = "boot-minecraft"
+            artifactId = "client"
         }
     }
 }
@@ -81,8 +116,7 @@ allprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "org.jetbrains.dokka")
 
-
-    group = "net.yakclient.components"
+    group = "net.yakclient"
 
     repositories {
         mavenCentral()
@@ -91,9 +125,9 @@ allprojects {
             url = uri("https://maven.pkg.github.com/durganmcbroom/artifact-resolver")
             credentials {
                 username = project.findProperty("dm.gpr.user") as? String
-                    ?: throw IllegalArgumentException("Need a Github package registry username!")
+                        ?: throw IllegalArgumentException("Need a Github package registry username!")
                 password = project.findProperty("dm.gpr.key") as? String
-                    ?: throw IllegalArgumentException("Need a Github package registry key!")
+                        ?: throw IllegalArgumentException("Need a Github package registry key!")
             }
         }
         maven {
@@ -131,6 +165,10 @@ allprojects {
         implementation(kotlin("stdlib"))
         implementation(kotlin("reflect"))
         testImplementation(kotlin("test"))
+    }
+
+    tasks.wrapper {
+        gradleVersion = "8.2"
     }
 
     tasks.compileKotlin {
