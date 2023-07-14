@@ -31,7 +31,7 @@ public fun main(args: Array<String>) {
     val pwdPath = Path.of(workingDir)
 
     val boot = ProductionBootInstance(pwdPath, DependencyTypeProvider())
-    val request = SoftwareComponentArtifactRequest("net.yakclient.components:yak:1.0-SNAPSHOT")
+    val request = SoftwareComponentArtifactRequest("net.yakclient.components:ext-loader:1.0-SNAPSHOT")
     if (!boot.isCached(request.descriptor)) boot.cache(
             request,
             SoftwareComponentRepositorySettings.default(
