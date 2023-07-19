@@ -53,7 +53,7 @@ public fun main(args: Array<String>) {
         ContextNodeTypes.newValueType(
             mapOf(
                 "mcVersion" to mcVersion,
-                "mcArgs" to listOf("--version", mcVersion, "--accessToken", accessToken),
+                "mcArgs" to listOf("--accessToken", accessToken),
                 "extensions" to extensions
             )
         )
