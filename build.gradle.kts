@@ -28,6 +28,7 @@ configurations {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("io.arrow-kt:arrow-core:1.1.2")
+    implementation("com.durganmcbroom:jobs:1.0-SNAPSHOT")
 
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
@@ -35,11 +36,9 @@ dependencies {
         isChanging = true
     }
     implementation("net.yakclient:boot:1.0-SNAPSHOT") {
-        exclude(group = "com.durganmcbroom", module = "artifact-resolver")
-        exclude(group = "com.durganmcbroom", module = "artifact-resolver-simple-maven")
-
-        exclude(group = "com.durganmcbroom", module = "artifact-resolver-jvm")
-        exclude(group = "com.durganmcbroom", module = "artifact-resolver-simple-maven-jvm")
+        isChanging = true
+    }
+    implementation("net.yakclient:object-container:1.0-SNAPSHOT") {
         isChanging = true
     }
     implementation("com.durganmcbroom:artifact-resolver:1.0-SNAPSHOT") {
@@ -120,16 +119,7 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven {
-            name = "Durgan McBroom GitHub Packages"
-            url = uri("https://maven.pkg.github.com/durganmcbroom/artifact-resolver")
-            credentials {
-                username = project.findProperty("dm.gpr.user") as? String
-                        ?: throw IllegalArgumentException("Need a Github package registry username!")
-                password = project.findProperty("dm.gpr.key") as? String
-                        ?: throw IllegalArgumentException("Need a Github package registry key!")
-            }
-        }
+        mavenLocal()
         maven {
             isAllowInsecureProtocol = true
             url = uri("http://maven.yakclient.net/snapshots")
