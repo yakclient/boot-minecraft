@@ -1,13 +1,13 @@
 plugins {
-    kotlin("jvm") version "1.8.20"
+    kotlin("jvm") version "2.0.0-Beta1"
     id("maven-publish")
-    id("org.jetbrains.dokka") version "1.6.0"
+    id("org.jetbrains.dokka") version "1.9.10"
     java
     application
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
-version = "1.0-SNAPSHOT"
+version = "1.1-SNAPSHOT"
 
 application {
     mainClass="net.yakclient.client.MainKt"
@@ -24,6 +24,9 @@ configurations {
     }
 }
 
+tasks.wrapper {
+    gradleVersion = "8.5"
+}
 
 dependencies {
     implementation(kotlin("stdlib"))
@@ -35,7 +38,7 @@ dependencies {
     implementation("net.yakclient:archives:1.1-SNAPSHOT") {
         isChanging = true
     }
-    implementation("net.yakclient:boot:1.0-SNAPSHOT") {
+    implementation("net.yakclient:boot:1.1-SNAPSHOT") {
         isChanging = true
     }
     implementation("net.yakclient:object-container:1.0-SNAPSHOT") {
@@ -52,7 +55,6 @@ dependencies {
     implementation("net.yakclient:common-util:1.0-SNAPSHOT") {
         isChanging = true
     }
-
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22")
 }
 
@@ -157,9 +159,7 @@ allprojects {
         testImplementation(kotlin("test"))
     }
 
-    tasks.wrapper {
-        gradleVersion = "8.2"
-    }
+
 
     tasks.compileKotlin {
         destinationDirectory.set(tasks.compileJava.get().destinationDirectory.asFile.get())
