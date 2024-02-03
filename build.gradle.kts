@@ -10,19 +10,19 @@ plugins {
 version = "1.1-SNAPSHOT"
 
 application {
-    mainClass="net.yakclient.client.MainKt"
+    mainClass = "net.yakclient.client.MainKt"
 }
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor(24, "hours")
 }
 
-val jarInclude by configurations.creating
-configurations {
-    implementation {
-        extendsFrom(jarInclude)
-    }
-}
+//val jarInclude by configurations.creating
+//configurations {
+//    implementation {
+//        extendsFrom(jarInclude)
+//    }
+//}
 
 tasks.wrapper {
     gradleVersion = "8.5"
@@ -38,7 +38,7 @@ dependencies {
     implementation("net.yakclient:archives:1.1-SNAPSHOT") {
         isChanging = true
     }
-    implementation("net.yakclient:boot:1.1-SNAPSHOT") {
+    implementation("net.yakclient:boot:2.0-SNAPSHOT") {
         isChanging = true
     }
     implementation("net.yakclient:object-container:1.0-SNAPSHOT") {
@@ -58,11 +58,53 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22")
 }
 
-tasks.shadowJar{
-    manifest {
 
+
+open class ListAllDependencies : DefaultTask() {
+    init {
+        // Define the output file within the build directory
+        val outputFile = project.buildDir.resolve("dependencies.txt")
+        outputs.file(outputFile)
+    }
+
+    @TaskAction
+    fun listDependencies() {
+        val outputFile = project.layout.buildDirectory.get().file("dependencies.txt").asFile
+        // Ensure the directory for the output file exists
+        outputFile.parentFile.mkdirs()
+        // Clear or create the output file
+        outputFile.writeText("")
+
+        val set = HashSet<String>()
+
+        // Process each configuration that can be resolved
+        project.configurations.filter { it.isCanBeResolved }.forEach { configuration ->
+            println("Processing configuration: ${configuration.name}")
+            try {
+                configuration.resolvedConfiguration.firstLevelModuleDependencies.forEach { dependency ->
+                    collectDependencies(dependency, set)
+                }
+            } catch (e: Exception) {
+                println("Skipping configuration '${configuration.name}' due to resolution errors.")
+            }
+        }
+
+        set.forEach {
+            outputFile.appendText(it)
+        }
+    }
+
+    private fun collectDependencies(dependency: ResolvedDependency, set: MutableSet<String>) {
+        set.add("${dependency.moduleGroup}:${dependency.moduleName}\n")
+        dependency.children.forEach { childDependency ->
+            collectDependencies(childDependency, set)
+        }
     }
 }
+
+// Register the custom task in the project
+tasks.register<ListAllDependencies>("listAllDependencies")
+
 
 task<Jar>("sourcesJar") {
     archiveClassifier.set("sources")
@@ -72,6 +114,10 @@ task<Jar>("sourcesJar") {
 task<Jar>("javadocJar") {
     archiveClassifier.set("javadoc")
     from(tasks.dokkaJavadoc)
+}
+
+tasks.shadowJar {
+    from(tasks.named("listAllDependencies"))
 }
 
 //tasks.jar {
