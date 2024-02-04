@@ -31,7 +31,6 @@ private fun getYakClientDir(): Path {
     return Path.of(System.getProperty("user.home")) resolve ".yakclient"
 }
 
-
 public fun main(args: Array<String>) {
     val parser = ArgParser("minecraft-boot")
 
