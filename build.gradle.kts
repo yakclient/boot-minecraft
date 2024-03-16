@@ -30,29 +30,27 @@ tasks.wrapper {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("io.arrow-kt:arrow-core:1.1.2")
-    implementation("com.durganmcbroom:jobs:1.0-SNAPSHOT")
+    implementation("com.durganmcbroom:jobs:1.2-SNAPSHOT")
 
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("net.yakclient:archives:1.1-SNAPSHOT") {
         isChanging = true
     }
-    implementation("net.yakclient:boot:2.0-SNAPSHOT") {
+    implementation("net.yakclient:boot:2.1-SNAPSHOT") {
         isChanging = true
     }
     implementation("net.yakclient:object-container:1.0-SNAPSHOT") {
         isChanging = true
     }
-    implementation("com.durganmcbroom:artifact-resolver:1.0-SNAPSHOT") {
+    implementation("com.durganmcbroom:artifact-resolver:1.1-SNAPSHOT") {
         isChanging = true
     }
-    implementation("com.durganmcbroom:artifact-resolver-simple-maven:1.0-SNAPSHOT") {
+    implementation("com.durganmcbroom:artifact-resolver-simple-maven:1.1-SNAPSHOT") {
         isChanging = true
     }
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.4")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
-    implementation("net.yakclient:common-util:1.0-SNAPSHOT") {
+    implementation("net.yakclient:common-util:1.1-SNAPSHOT") {
         isChanging = true
     }
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22")
@@ -167,7 +165,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-        mavenLocal()
         maven {
             isAllowInsecureProtocol = true
             url = uri("http://maven.yakclient.net/snapshots")
