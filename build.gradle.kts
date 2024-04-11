@@ -17,13 +17,6 @@ configurations.all {
     resolutionStrategy.cacheChangingModulesFor(24, "hours")
 }
 
-//val jarInclude by configurations.creating
-//configurations {
-//    implementation {
-//        extendsFrom(jarInclude)
-//    }
-//}
-
 tasks.wrapper {
     gradleVersion = "8.5"
 }
@@ -55,8 +48,6 @@ dependencies {
     }
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22")
 }
-
-
 
 open class ListAllDependencies : DefaultTask() {
     init {
@@ -117,33 +108,6 @@ task<Jar>("javadocJar") {
 tasks.shadowJar {
     from(tasks.named("listAllDependencies"))
 }
-
-//tasks.jar {
-//    from(jarInclude.files) {
-//        into("/")
-//    }
-//
-//    println(jarInclude.files.joinToString(separator = " ") {
-//        "${it.name}"
-//    })
-//
-//    manifest {
-//        attributes(
-//                "Class-Path" to jarInclude.files.filter { it.name.contains("kotlin-stdlib-1.8.20.jar") } .joinToString(separator = " ") {
-//                    "${it.name}"
-//                },
-//                "Main-Class" to "net.yakclient.client.MainKt",
-//        )
-//    }
-//}
-
-
-//tasks.implementationJar {
-//    minimize()
-//}
-//
-
-
 publishing {
     publications {
         create<MavenPublication>("prod") {
@@ -165,6 +129,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        mavenLocal()
         maven {
             isAllowInsecureProtocol = true
             url = uri("http://maven.yakclient.net/snapshots")

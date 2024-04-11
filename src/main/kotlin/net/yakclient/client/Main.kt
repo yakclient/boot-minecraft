@@ -61,7 +61,7 @@ public fun main(args: Array<String>) {
                                 setOf(),
                                 object : ArchiveAccessTree {
                                     override val descriptor: ArtifactMetadata.Descriptor = key
-                                    override val targets: Set<ArchiveTarget> = emptySet()
+                                    override val targets: List<ArchiveTarget> = emptyList()
                                 },
                                 EMPTY_RESOLVER
                             )
@@ -73,7 +73,7 @@ public fun main(args: Array<String>) {
             }
         )
     )
-    val request = SoftwareComponentArtifactRequest("net.yakclient.components:ext-loader:1.0-SNAPSHOT")
+    val request = SoftwareComponentArtifactRequest("net.yakclient.components:ext-loader:1.1-SNAPSHOT")
 
     runBootBlocking(JobName("Cache and start yakclient extloader")) {
         if (!boot.isCached(request.descriptor)) boot.cache(
