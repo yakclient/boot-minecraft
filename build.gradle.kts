@@ -7,7 +7,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
-version = "1.1-SNAPSHOT"
+version = "1.1.1-SNAPSHOT"
 
 application {
     mainClass = "net.yakclient.client.MainKt"
@@ -29,21 +29,21 @@ dependencies {
     implementation("net.yakclient:archives:1.1-SNAPSHOT") {
         isChanging = true
     }
-    implementation("net.yakclient:boot:2.1-SNAPSHOT") {
+    implementation("net.yakclient:boot:2.1.1-SNAPSHOT") {
         isChanging = true
     }
     implementation("net.yakclient:object-container:1.0-SNAPSHOT") {
         isChanging = true
     }
-    implementation("com.durganmcbroom:artifact-resolver:1.1-SNAPSHOT") {
+    implementation("com.durganmcbroom:artifact-resolver:1.1.3-SNAPSHOT") {
         isChanging = true
     }
-    implementation("com.durganmcbroom:artifact-resolver-simple-maven:1.1-SNAPSHOT") {
+    implementation("com.durganmcbroom:artifact-resolver-simple-maven:1.1.3-SNAPSHOT") {
         isChanging = true
     }
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.4")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
-    implementation("net.yakclient:common-util:1.1-SNAPSHOT") {
+    implementation("net.yakclient:common-util:1.1.3-SNAPSHOT") {
         isChanging = true
     }
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22")

@@ -73,7 +73,7 @@ public fun main(args: Array<String>) {
             }
         )
     )
-    val request = SoftwareComponentArtifactRequest("net.yakclient.components:ext-loader:1.1-SNAPSHOT")
+    val request = SoftwareComponentArtifactRequest("net.yakclient.components:ext-loader:1.1.1-SNAPSHOT")
 
     runBootBlocking(JobName("Cache and start yakclient extloader")) {
         if (!boot.isCached(request.descriptor)) boot.cache(
