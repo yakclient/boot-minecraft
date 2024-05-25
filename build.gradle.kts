@@ -7,7 +7,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
-version = "1.1.1-SNAPSHOT"
+version = "1.1.2-SNAPSHOT"
 
 application {
     mainClass = "net.yakclient.client.MainKt"
@@ -20,6 +20,8 @@ configurations.all {
 tasks.wrapper {
     gradleVersion = "8.5"
 }
+
+val artifactResolverVersions = "1.1.4-SNAPSHOT"
 
 dependencies {
     implementation(kotlin("stdlib"))
@@ -35,10 +37,10 @@ dependencies {
     implementation("net.yakclient:object-container:1.0-SNAPSHOT") {
         isChanging = true
     }
-    implementation("com.durganmcbroom:artifact-resolver:1.1.3-SNAPSHOT") {
+    implementation("com.durganmcbroom:artifact-resolver:$artifactResolverVersions") {
         isChanging = true
     }
-    implementation("com.durganmcbroom:artifact-resolver-simple-maven:1.1.3-SNAPSHOT") {
+    implementation("com.durganmcbroom:artifact-resolver-simple-maven:$artifactResolverVersions") {
         isChanging = true
     }
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.4")
