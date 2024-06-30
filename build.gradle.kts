@@ -1,3 +1,7 @@
+import dev.extframework.gradle.common.*
+import dev.extframework.gradle.common.dm.artifactResolver
+import dev.extframework.gradle.common.dm.jobs
+
 plugins {
     kotlin("jvm") version "2.0.0-Beta1"
     id("maven-publish")
@@ -5,16 +9,23 @@ plugins {
     java
     application
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("dev.extframework.common") version "1.0.5"
 }
 
+group = "dev.extframework"
 version = "1.1.2-SNAPSHOT"
 
-application {
-    mainClass = "net.yakclient.client.MainKt"
+repositories {
+    mavenCentral()
+    extFramework()
 }
 
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor(24, "hours")
+application {
+    mainClass = "dev.extframework.client.MainKt"
+}
+
+kotlin {
+    explicitApi()
 }
 
 tasks.wrapper {
@@ -25,30 +36,21 @@ val artifactResolverVersions = "1.1.4-SNAPSHOT"
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("com.durganmcbroom:jobs:1.2-SNAPSHOT")
-
+    implementation(kotlin("reflect"))
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
-    implementation("net.yakclient:archives:1.1-SNAPSHOT") {
-        isChanging = true
-    }
-    implementation("net.yakclient:boot:2.1.1-SNAPSHOT") {
-        isChanging = true
-    }
-    implementation("net.yakclient:object-container:1.0-SNAPSHOT") {
-        isChanging = true
-    }
-    implementation("com.durganmcbroom:artifact-resolver:$artifactResolverVersions") {
-        isChanging = true
-    }
-    implementation("com.durganmcbroom:artifact-resolver-simple-maven:$artifactResolverVersions") {
-        isChanging = true
-    }
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.4")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
-    implementation("net.yakclient:common-util:1.1.3-SNAPSHOT") {
-        isChanging = true
-    }
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22")
+
+    jobs()
+    archives()
+    boot()
+    objectContainer()
+    artifactResolver(maven = true)
+    commonUtil()
+
+    testImplementation(kotlin("test"))
+
 }
 
 open class ListAllDependencies : DefaultTask() {
@@ -97,104 +99,29 @@ open class ListAllDependencies : DefaultTask() {
 tasks.register<ListAllDependencies>("listAllDependencies")
 
 
-task<Jar>("sourcesJar") {
-    archiveClassifier.set("sources")
-    from(sourceSets.main.get().allSource)
-}
-
-task<Jar>("javadocJar") {
-    archiveClassifier.set("javadoc")
-    from(tasks.dokkaJavadoc)
-}
-
 tasks.shadowJar {
     from(tasks.named("listAllDependencies"))
 }
-publishing {
-    publications {
-        create<MavenPublication>("prod") {
+
+common {
+    defaultJavaSettings()
+
+    publishing {
+        publication {
+            withSources()
+            withDokka()
             artifact(tasks.shadowJar)
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
 
             artifactId = "client"
+        }
+        repositories {
+            extFramework(credentials = propertyCredentialProvider)
         }
     }
 }
 
-allprojects {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "maven-publish")
-    apply(plugin = "org.jetbrains.dokka")
-
-    group = "net.yakclient"
-
-    repositories {
-        mavenCentral()
-        maven {
-            isAllowInsecureProtocol = true
-            url = uri("http://maven.yakclient.net/snapshots")
-        }
-    }
-
-    publishing {
-        repositories {
-            if (project.hasProperty("maven-user") && project.hasProperty("maven-secret")) maven {
-                logger.quiet("Maven user and password found.")
-                val repo = if ((version as String).endsWith("-SNAPSHOT")) "snapshots" else "releases"
-
-                isAllowInsecureProtocol = true
-
-                url = uri("http://maven.yakclient.net/$repo")
-
-                credentials {
-                    username = project.findProperty("maven-user") as String
-                    password = project.findProperty("maven-secret") as String
-                }
-                authentication {
-                    create<BasicAuthentication>("basic")
-                }
-            } else logger.quiet("Maven user and password not found.")
-        }
-    }
-
-    kotlin {
-        explicitApi()
-    }
-
-    dependencies {
-        implementation(kotlin("stdlib"))
-        implementation(kotlin("reflect"))
-        testImplementation(kotlin("test"))
-    }
-
-
-
-    tasks.compileKotlin {
-        destinationDirectory.set(tasks.compileJava.get().destinationDirectory.asFile.get())
-
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
-
-    tasks.compileTestKotlin {
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
-
-    tasks.test {
-        useJUnitPlatform()
-    }
-
-    tasks.compileJava {
-        targetCompatibility = "17"
-        sourceCompatibility = "17"
-    }
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(17))
-        }
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }

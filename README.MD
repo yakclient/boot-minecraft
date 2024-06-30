@@ -1,5 +1,4 @@
 # TODO
- - Rename repo `yakclient` to `ext-loader`
  - rename repo `minecraft-bootstrapper` to `mc-loader`
  - Change boot SoftwareComponent to just Component
  - Add methods to BootInstance that recieve a context node value instead of specific configuration type

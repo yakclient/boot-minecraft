@@ -1,4 +1,4 @@
-package net.yakclient.client
+package dev.extframework.client
 
 import com.durganmcbroom.artifact.resolver.ArtifactMetadata
 import com.durganmcbroom.artifact.resolver.ArtifactRequest
@@ -14,22 +14,22 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
-import net.yakclient.boot.archive.*
-import net.yakclient.boot.component.ComponentConfiguration
-import net.yakclient.boot.component.ComponentFactory
-import net.yakclient.boot.component.ComponentInstance
-import net.yakclient.boot.component.artifact.SoftwareComponentArtifactRequest
-import net.yakclient.boot.component.artifact.SoftwareComponentRepositorySettings
-import net.yakclient.boot.component.context.ContextNodeTypes
-import net.yakclient.boot.dependency.BasicDependencyNode
-import net.yakclient.boot.main.ProductionBootInstance
-import net.yakclient.common.util.readInputStream
-import net.yakclient.common.util.resolve
+import dev.extframework.boot.archive.*
+import dev.extframework.boot.component.ComponentConfiguration
+import dev.extframework.boot.component.ComponentFactory
+import dev.extframework.boot.component.ComponentInstance
+import dev.extframework.boot.component.artifact.SoftwareComponentArtifactRequest
+import dev.extframework.boot.component.artifact.SoftwareComponentRepositorySettings
+import dev.extframework.boot.component.context.ContextNodeTypes
+import dev.extframework.boot.dependency.BasicDependencyNode
+import dev.extframework.boot.main.ProductionBootInstance
+import dev.extframework.common.util.readInputStream
+import dev.extframework.common.util.resolve
 import runBootBlocking
 import java.nio.file.Path
 
 private fun getYakClientDir(): Path {
-    return Path.of(System.getProperty("user.home")) resolve ".yakclient"
+    return Path.of(System.getProperty("user.home")) resolve ".extframework"
 }
 
 public fun main(args: Array<String>) {
@@ -73,15 +73,15 @@ public fun main(args: Array<String>) {
             }
         )
     )
-    val request = SoftwareComponentArtifactRequest("net.yakclient.components:ext-loader:1.1.1-SNAPSHOT")
+    val request = SoftwareComponentArtifactRequest("dev.extframework.components:ext-loader:1.1.1-SNAPSHOT")
 
-    runBootBlocking(JobName("Cache and start yakclient extloader")) {
+    runBootBlocking(JobName("Cache and start extframework extloader")) {
         if (!boot.isCached(request.descriptor)) boot.cache(
             request,
             if (devMode) SoftwareComponentRepositorySettings.local() else
                 SoftwareComponentRepositorySettings
                     .default(
-                        "http://maven.yakclient.net/snapshots",
+                        "https://maven.extframework.dev/snapshots",
                         preferredHash = ResourceAlgorithm.SHA1
                     )
         )().merge()
