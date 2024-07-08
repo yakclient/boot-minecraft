@@ -28,14 +28,14 @@ import dev.extframework.common.util.resolve
 import runBootBlocking
 import java.nio.file.Path
 
-private fun getYakClientDir(): Path {
+private fun getHomedir(): Path {
     return Path.of(System.getProperty("user.home")) resolve ".extframework"
 }
 
 public fun main(args: Array<String>) {
     val parser = ArgParser("minecraft-boot")
 
-    val workingDir by parser.option(ArgType.String, "working-dir", "w").default(getYakClientDir().toString())
+    val workingDir by parser.option(ArgType.String, "working-dir", "w").default(getHomedir().toString())
     val devMode by parser.option(ArgType.Boolean, "devmode").default(false)
 
     parser.parse(args)
