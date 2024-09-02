@@ -16,7 +16,7 @@ import dev.extframework.boot.loader.SourceProvider
 import dev.extframework.boot.maven.MavenLikeResolver
 import dev.extframework.common.util.readInputStream
 import dev.extframework.common.util.resolve
-import dev.extframework.components.extloader.workflow.*
+import dev.extframework.extloader.workflow.*
 import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
 import dev.extframework.internal.api.extension.artifact.ExtensionRepositorySettings
 import dev.extframework.minecraft.bootstrapper.MinecraftNode
@@ -31,7 +31,8 @@ internal class LaunchInfo<T : WorkflowContext>(
     val mainClass: String,
     val classloader: ClassLoader,
     val context: T,
-    val workflow: Workflow<T>
+    val workflow: Workflow<T>,
+    val mappingNS: String
 )
 
 internal class Container<T>(
@@ -87,7 +88,7 @@ internal data class LaunchContext(
     val launchInfo: Container<LaunchInfo<*>>,
     val options: GameOptions,
     val extensions: List<ExtensionDescriptor>,
-    val repositories: List<ExtensionRepositorySettings>
+    val repositories: List<ExtensionRepositorySettings>,
 ) {
     private val packagedDependencies = parsePackagedDependencies()
     val archiveGraph = setupArchiveGraph(options.workingDir resolve "archives", packagedDependencies)
@@ -152,7 +153,8 @@ internal class ProductionCommand(
                             extensions.zip(repositories).toMap()
                         }
                     ),
-                    ProdWorkflow()
+                    ProdWorkflow(),
+                    "mojang:obfuscated"
                 )
             },
             GameOptions(
@@ -170,7 +172,7 @@ internal class ProductionCommand(
                 versionType,
                 quickPlayPath
             ),
-            extensions, repositories
+            extensions, repositories,
         )
     }
 
@@ -248,7 +250,8 @@ internal class DevCommand : CliktCommand(name = "dev") {
                     launchContext.extensions.first(),
                     launchContext.repositories.first(),
                 ),
-                DevWorkflow()
+                DevWorkflow(),
+                mappingNamespace,
             )
 
             launchContext.launchInfo.value = info
@@ -262,7 +265,7 @@ private fun loadMinecraft(
     path: Path,
     archiveGraph: ArchiveGraph,
     mavenResolver: MavenLikeResolver<ClassLoadedArchiveNode<SimpleMavenDescriptor>, *>,
-    forceProvider: SimpleMavenDescriptor?
+    forceProvider: SimpleMavenDescriptor?,
 ) = job {
     val cache = path resolve "minecraft"
     dev.extframework.minecraft.bootstrapper.loadMinecraft(
