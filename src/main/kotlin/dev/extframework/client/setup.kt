@@ -24,7 +24,7 @@ internal fun setupExtraAuditors(
 ): Auditors {
     val negotiator = MavenConstraintNegotiator()
 
-    val alreadyLoaded = packagedDependencies.map {
+    val alreadyLoaded = packagedDependencies.mapTo(HashSet()) {
         negotiator.classify(it)
     }
 
