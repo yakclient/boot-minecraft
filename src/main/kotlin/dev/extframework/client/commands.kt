@@ -111,7 +111,8 @@ internal class ProductionCommand(
         .default(SimpleMavenRepositorySettings.default(url = "https://maven.extframework.dev/snapshots"))
     val forceProvider by option()
         .mavenDescriptor()
-    val mappingNamespace by option().required()
+    val mappingNamespace by option()
+        .default("mojang:deobfuscated")
 
     var launchContext: LaunchContext by immutableLateInit()
 
