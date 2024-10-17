@@ -128,7 +128,7 @@ common {
             artifactId = "dev-client"
         }
         repositories {
-            extFramework(credentials = propertyCredentialProvider)
+            extFramework(credentials = propertyCredentialProvider, type = RepositoryType.RELEASES)
         }
     }
 }
