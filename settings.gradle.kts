@@ -7,5 +7,5 @@ pluginManagement {
     }
 }
 
-rootProject.name = "client"
+rootProject.name = "dev-client"
 

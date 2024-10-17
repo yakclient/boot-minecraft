@@ -12,10 +12,12 @@ import dev.extframework.internal.api.target.ApplicationDescriptor
 import dev.extframework.internal.api.target.ApplicationTarget
 import java.net.URL
 import java.nio.ByteBuffer
+import java.nio.file.Path
 
 internal class AppTarget(
     private val delegate: ClassLoader,
     version: String,
+    override val path: Path,
 ) : ApplicationTarget {
     override val node: ClassLoadedArchiveNode<ApplicationDescriptor> =
         object : ClassLoadedArchiveNode<ApplicationDescriptor> {

@@ -9,11 +9,11 @@ plugins {
     java
     application
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("dev.extframework.common") version "1.0.24"
+    id("dev.extframework.common") version "1.0.25"
 }
 
 group = "dev.extframework"
-version = "2.1.1-SNAPSHOT"
+version = "1.0-BETA"
 
 repositories {
     mavenCentral()
@@ -37,6 +37,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation("com.github.ajalt.clikt:clikt:4.4.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 
     toolingApi()
     jobs()
@@ -45,8 +46,8 @@ dependencies {
     objectContainer()
     artifactResolver(maven = true)
     commonUtil()
-    extLoader()
-    minecraftBootstrapper()
+    extLoader(version = "2.1.6-SNAPSHOT")
+    minecraftBootstrapper(version="2.0.9-SNAPSHOT")
 
     testImplementation(kotlin("test"))
 }
@@ -124,7 +125,7 @@ common {
             withDokka()
             artifact(tasks.shadowJar)
 
-            artifactId = "client"
+            artifactId = "dev-client"
         }
         repositories {
             extFramework(credentials = propertyCredentialProvider)

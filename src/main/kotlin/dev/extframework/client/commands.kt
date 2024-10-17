@@ -7,50 +7,34 @@ import com.durganmcbroom.jobs.job
 import com.durganmcbroom.jobs.launch
 import com.github.ajalt.clikt.core.*
 import com.github.ajalt.clikt.parameters.options.*
-import com.github.ajalt.clikt.parameters.types.path
 import dev.extframework.boot.archive.ArchiveGraph
 import dev.extframework.boot.archive.ClassLoadedArchiveNode
 import dev.extframework.boot.audit.Auditors
-import dev.extframework.boot.loader.IntegratedLoader
-import dev.extframework.boot.loader.SourceProvider
+import dev.extframework.boot.dependency.DependencyTypeContainer
+import dev.extframework.boot.loader.*
 import dev.extframework.boot.maven.MavenLikeResolver
-import dev.extframework.common.util.readInputStream
+import dev.extframework.common.util.immutableLateInit
 import dev.extframework.common.util.resolve
-import dev.extframework.extloader.workflow.*
 import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
 import dev.extframework.internal.api.extension.artifact.ExtensionRepositorySettings
 import dev.extframework.minecraft.bootstrapper.MinecraftNode
 import dev.extframework.minecraft.bootstrapper.MinecraftProviderFinder
 import dev.extframework.minecraft.bootstrapper.MinecraftProviderRemoteLookup
-import java.nio.ByteBuffer
+import dev.extframework.minecraft.bootstrapper.loadMinecraft
 import java.nio.file.Path
 import java.util.*
 
-internal class LaunchInfo<T : WorkflowContext>(
+internal class LaunchInfo(
     val args: Array<String>,
     val mainClass: String,
     val classloader: ClassLoader,
-    val context: T,
-    val workflow: Workflow<T>,
+
+    val requests: Map<ExtensionDescriptor, ExtensionRepositorySettings>,
+
+    val minecraftPath: Path,
+
     val mappingNS: String
 )
-
-internal class Container<T>(
-    val default: () -> T
-) {
-    private var valueInternal: T? = null
-
-    var value: T
-        set(it) {
-            valueInternal = it
-        }
-        get() {
-            if (valueInternal == null) {
-                valueInternal = default()
-            }
-            return valueInternal!!
-        }
-}
 
 internal class GameOptions(
     val workingDir: Path,
@@ -85,28 +69,21 @@ internal class GameOptions(
 }
 
 internal data class LaunchContext(
-    val launchInfo: Container<LaunchInfo<*>>,
+    val launchInfo: LaunchInfo,
     val options: GameOptions,
-    val extensions: List<ExtensionDescriptor>,
-    val repositories: List<ExtensionRepositorySettings>,
-) {
-    private val packagedDependencies = parsePackagedDependencies()
-    val archiveGraph = setupArchiveGraph(options.workingDir resolve "archives", packagedDependencies)
-    val extraAuditors: Auditors = setupExtraAuditors(archiveGraph, packagedDependencies)
-    val dependencyTypes = setupDependencyTypes(archiveGraph, extraAuditors)
-}
+    val archiveGraph: ArchiveGraph,
+    val extraAuditors: Auditors,
+    val dependencyTypes: DependencyTypeContainer,
+)
 
 internal val VERSION_REGEX = Regex("extframework-(?<version>[0-9a-zA-Z.]+)")
 
 internal class ProductionCommand(
-
+    val minecraftDir: Path,
+    val extframeworkDir: Path
 ) : CliktCommand(
     invokeWithoutSubcommand = true
 ) {
-    val workingDir: Path by option("--working-dir", "-d").path(canBeFile = false)
-        .convert { it.toAbsolutePath() }
-        .default(getHomedir())
-
     val username by option()
     val version by option()
         .required()
@@ -125,66 +102,10 @@ internal class ProductionCommand(
     val extensions by option("--extension", "-e")
         .extensionDescriptor()
         .multiple()
-
     val repositories by option("--repository", "-r")
         .repository()
         .multiple()
 
-    val launchContext by findOrSetObject {
-        LaunchContext(
-            Container {
-                LaunchInfo(
-                    currentContext.originalArgv.toTypedArray(),
-                    run {
-                        this::class.java.classLoader.getResources("META-INF/MANIFEST.MF").asSequence().toList().map {
-                            Properties().apply { this.load(it.openStream()) }
-                        }.mapNotNull {
-                            it["Main-Class"] as String?
-                        }.find { it.contains("net.minecraft") }
-                            ?: throw IllegalStateException("Environment not properly setup, Minecraft is not on the class path.")
-                    },
-                    this::class.java.classLoader,
-                    ProdWorkflowContext(
-                        run {
-                            if (repositories.size != extensions.size) throw UsageError(
-                                "For every extension declaration there must be a corresponding repository!"
-                            )
-
-                            extensions.zip(repositories).toMap()
-                        }
-                    ),
-                    ProdWorkflow(),
-                    "mojang:obfuscated"
-                )
-            },
-            GameOptions(
-                workingDir,
-                username,
-                version,
-                gameDir,
-                assetsDir,
-                assetIndex,
-                uuid,
-                accessToken,
-                clientId,
-                xuid,
-                userType,
-                versionType,
-                quickPlayPath
-            ),
-            extensions, repositories,
-        )
-    }
-
-    override fun run() {
-        // This line is unfortunately required for the whole thing to work
-        echo("Launch context built: ${launchContext.options}")
-
-        check(VERSION_REGEX.matches(version)) { "Invalid version format: '$version', expected 'extframework-(?<version>[0-9a-zA-Z.]+)'" }
-    }
-}
-
-internal class DevCommand : CliktCommand(name = "dev") {
     val mcProviderRepository by option()
         .repository()
         .default(SimpleMavenRepositorySettings.default(url = "https://maven.extframework.dev/snapshots"))
@@ -192,88 +113,107 @@ internal class DevCommand : CliktCommand(name = "dev") {
         .mavenDescriptor()
     val mappingNamespace by option().required()
 
-    val launchContext: LaunchContext by requireObject()
+    var launchContext: LaunchContext by immutableLateInit()
 
     override fun run() {
+        // This line is unfortunately required for the whole thing to work
+        check(VERSION_REGEX.matches(version)) { "Invalid version format: '$version', expected 'extframework-(?<version>[0-9a-zA-Z.]+)'" }
+
         launch(BootLoggerFactory()) {
+            val packagedDependencies = parsePackagedDependencies()
+            val archiveGraph = setupArchiveGraph(extframeworkDir resolve "archives", packagedDependencies)
+            val extraAuditors: Auditors = setupExtraAuditors(archiveGraph, packagedDependencies)
+            val dependencyTypes = setupDependencyTypes(archiveGraph, extraAuditors)
+
             val handle: MinecraftNode = loadMinecraft(
-                VERSION_REGEX.matchEntire(launchContext.options.version)!!.groups["version"]!!.value,
+                VERSION_REGEX.matchEntire(version)!!.groups["version"]!!.value,
                 mcProviderRepository,
-                launchContext.options.workingDir,
-                launchContext.archiveGraph,
-                launchContext.dependencyTypes.get("simple-maven")!!.resolver as MavenLikeResolver<ClassLoadedArchiveNode<SimpleMavenDescriptor>, *>,
+                minecraftDir,
+                extframeworkDir,
+                archiveGraph,
+                dependencyTypes.get("simple-maven")!!.resolver as MavenLikeResolver<ClassLoadedArchiveNode<SimpleMavenDescriptor>, *>,
                 forceProvider
             )().merge()
 
-            if (launchContext.extensions.size != 1) throw UsageError(
-                "The dev command must be supplied 1 extension.",
-                "extension"
-            )
-            if (launchContext.repositories.size != 1) throw UsageError(
-                "The dev command must be supplied 1 repository.",
-                "repository"
-            )
-
             val info = LaunchInfo(
                 arrayOfNonNulls(
-                    "--username" to launchContext.options.username,
-                    "--version" to launchContext.options.version,
-                    "--gameDir" to (launchContext.options.gameDir ?: handle.runtimeInfo.gameDir.toString()),
-                    "--assetsDir" to (launchContext.options.assetsDir ?: handle.runtimeInfo.assetsPath.toString()),
-                    "--assetIndex" to (launchContext.options.assetIndex ?: handle.runtimeInfo.assetsName),
-                    "--uuid" to launchContext.options.uuid,
-                    "--accessToken" to launchContext.options.accessToken,
-                    "--clientId" to launchContext.options.clientId,
-                    "--xuid" to launchContext.options.xuid,
-                    "--userType" to launchContext.options.userType,
-                    "--versionType" to launchContext.options.versionType,
-                    "--quickPlayPath" to launchContext.options.quickPlayPath,
+                    "--username" to username,
+                    "--version" to version,
+                    "--gameDir" to (gameDir ?: minecraftDir).toString(),
+                    "--assetsDir" to (assetsDir ?: handle.runtimeInfo.assetsPath.toString()),
+                    "--assetIndex" to (assetIndex ?: handle.runtimeInfo.assetsName),
+                    "--uuid" to uuid,
+                    "--accessToken" to accessToken,
+                    "--clientId" to clientId,
+                    "--xuid" to xuid,
+                    "--userType" to userType,
+                    "--versionType" to versionType,
+                    "--quickPlayPath" to quickPlayPath,
                 ),
                 handle.runtimeInfo.mainClass,
                 IntegratedLoader(
                     name = "Minecraft",
-                    sourceProvider = object : SourceProvider {
-                        override val packages: Set<String> = setOf()
-
-                        override fun findSource(name: String): ByteBuffer? {
-                            return handle.resources.findResources(name.replace('.', '/') + ".class")
-                                .firstOrNull()
-                                ?.openStream()
-                                ?.readInputStream()
-                                ?.let(ByteBuffer::wrap)
-                        }
-                    },
-                    resourceProvider = handle.resources,
+                    sourceProvider = MutableSourceProvider(
+                        (handle.libraries.map { it.archive } + handle.archive)
+                            .mapTo(ArrayList()) { ArchiveSourceProvider(it) }
+                    ),
+                    resourceProvider = MutableResourceProvider(
+                        (handle.libraries.map { it.archive } + handle.archive)
+                            .mapTo(ArrayList()) { ArchiveResourceProvider(it) }
+                    ),
                     parent = ClassLoader.getPlatformClassLoader(),
                 ),
-                DevWorkflowContext(
-                    launchContext.extensions.first(),
-                    launchContext.repositories.first(),
-                ),
-                DevWorkflow(),
+                extensions.zip(repositories).toMap(),
+                Path.of(handle.archive.location),
                 mappingNamespace,
             )
 
-            launchContext.launchInfo.value = info
+            val context = LaunchContext(
+                info,
+                GameOptions(
+                    minecraftDir,
+                    username,
+                    version,
+                    gameDir,
+                    assetsDir,
+                    assetIndex,
+                    uuid,
+                    accessToken,
+                    clientId,
+                    xuid,
+                    userType,
+                    versionType,
+                    quickPlayPath
+                ),
+                archiveGraph,
+                extraAuditors,
+                dependencyTypes
+            )
+
+            launchContext = context
         }
+
+        echo("Launch context built: ${launchContext.options}")
+
     }
 }
 
 private fun loadMinecraft(
     version: String,
     mcProviderRepo: SimpleMavenRepositorySettings,
-    path: Path,
+    mcPath: Path,
+    extframework: Path,
     archiveGraph: ArchiveGraph,
     mavenResolver: MavenLikeResolver<ClassLoadedArchiveNode<SimpleMavenDescriptor>, *>,
     forceProvider: SimpleMavenDescriptor?,
 ) = job {
-    val cache = path resolve "minecraft"
-    dev.extframework.minecraft.bootstrapper.loadMinecraft(
+    loadMinecraft(
         version,
         mcProviderRepo,
-        cache,
-        archiveGraph, mavenResolver,
-        if (forceProvider == null) MinecraftProviderRemoteLookup(cache)
+        mcPath,
+        archiveGraph,
+        mavenResolver,
+        if (forceProvider == null) MinecraftProviderRemoteLookup(extframework resolve "minecraft")
         else object : MinecraftProviderFinder {
             override fun find(version: String): SimpleMavenDescriptor {
                 return forceProvider
