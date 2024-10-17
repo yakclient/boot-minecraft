@@ -125,7 +125,7 @@ common {
             withDokka()
             artifact(tasks.shadowJar)
 
-            artifactId = "dev-client"
+            artifactId = "client"
         }
         repositories {
             extFramework(credentials = propertyCredentialProvider, type = RepositoryType.RELEASES)
