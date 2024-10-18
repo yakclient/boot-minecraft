@@ -27,11 +27,12 @@ import java.util.*
 internal class LaunchInfo(
     val args: Array<String>,
     val mainClass: String,
-    val classloader: ClassLoader,
+    val minecraftNode: MinecraftNode,
 
     val requests: Map<ExtensionDescriptor, ExtensionRepositorySettings>,
 
     val minecraftPath: Path,
+    val extensionDirPath: Path,
 
     val mappingNS: String
 )
@@ -114,6 +115,9 @@ internal class ProductionCommand(
     val mappingNamespace by option()
         .default("mojang:deobfuscated")
 
+    val extensionDir by option()
+        .default((extframeworkDir resolve "miencraft").toString())
+
     var launchContext: LaunchContext by immutableLateInit()
 
     override fun run() {
@@ -152,20 +156,10 @@ internal class ProductionCommand(
                     "--quickPlayPath" to quickPlayPath,
                 ),
                 handle.runtimeInfo.mainClass,
-                IntegratedLoader(
-                    name = "Minecraft",
-                    sourceProvider = MutableSourceProvider(
-                        (handle.libraries.map { it.archive } + handle.archive)
-                            .mapTo(ArrayList()) { ArchiveSourceProvider(it) }
-                    ),
-                    resourceProvider = MutableResourceProvider(
-                        (handle.libraries.map { it.archive } + handle.archive)
-                            .mapTo(ArrayList()) { ArchiveResourceProvider(it) }
-                    ),
-                    parent = ClassLoader.getPlatformClassLoader(),
-                ),
+                handle,
                 extensions.zip(repositories).toMap(),
                 Path.of(handle.archive.location),
+                Path.of(extensionDir),
                 mappingNamespace,
             )
 
