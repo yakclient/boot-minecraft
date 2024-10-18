@@ -116,7 +116,7 @@ internal class ProductionCommand(
         .default("mojang:deobfuscated")
 
     val extensionDir by option()
-        .default((extframeworkDir resolve "miencraft").toString())
+        .default((extframeworkDir resolve "extensions").toString())
 
     var launchContext: LaunchContext by immutableLateInit()
 
