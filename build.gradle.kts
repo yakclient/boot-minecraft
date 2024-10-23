@@ -13,11 +13,12 @@ plugins {
 }
 
 group = "dev.extframework"
-version = "1.0.4-BETA"
+version = "1.0.5-BETA"
 
 repositories {
     mavenCentral()
     extFramework()
+    mavenLocal()
 }
 
 application {
@@ -42,11 +43,11 @@ dependencies {
     toolingApi()
     jobs()
     archives()
-    boot()
+    boot(version = "3.2.4-SNAPSHOT")
     objectContainer()
     artifactResolver(maven = true)
     commonUtil()
-    extLoader()
+    extLoader(version = "2.1.7-SNAPSHOT")
     minecraftBootstrapper()
 
     testImplementation(kotlin("test"))

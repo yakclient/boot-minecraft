@@ -51,7 +51,6 @@ public fun main(args: Array<String>) {
             )
         )
         environment += ClientExtensionResolver(
-            ClassLoader.getPlatformClassLoader(),
             environment,
             launchContext.launchInfo.extensionDirPath
         )
@@ -72,11 +71,10 @@ public fun main(args: Array<String>) {
 }
 
 private class ClientExtensionResolver(
-    parent: ClassLoader,
     environment: ExtensionEnvironment,
     private val path: Path,
 ) : DefaultExtensionResolver(
-    parent, environment
+    ClientExtensionResolver::class.java.classLoader, environment
 ) {
     override val partitionResolver: DefaultPartitionResolver = object : DefaultPartitionResolver(
         factory,
