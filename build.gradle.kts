@@ -9,11 +9,11 @@ plugins {
     java
     application
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("dev.extframework.common") version "1.0.25"
+    id("dev.extframework.common") version "1.0.26"
 }
 
 group = "dev.extframework"
-version = "1.0.3-BETA"
+version = "1.0.4-BETA"
 
 repositories {
     mavenCentral()
@@ -46,8 +46,8 @@ dependencies {
     objectContainer()
     artifactResolver(maven = true)
     commonUtil()
-    extLoader(version = "2.1.6-SNAPSHOT")
-    minecraftBootstrapper(version="2.0.9-SNAPSHOT")
+    extLoader()
+    minecraftBootstrapper()
 
     testImplementation(kotlin("test"))
 }

@@ -113,7 +113,7 @@ internal class ProductionCommand(
     val forceProvider by option()
         .mavenDescriptor()
     val mappingNamespace by option()
-        .default("mojang:deobfuscated")
+        .default("mojang:obfuscated")
 
     val extensionDir by option()
         .default((extframeworkDir resolve "extensions").toString())
