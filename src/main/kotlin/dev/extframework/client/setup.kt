@@ -44,9 +44,11 @@ internal fun setupExtraAuditors(
     )
 }
 
+private class THIS
+
 internal fun parsePackagedDependencies(): Set<SimpleMavenDescriptor> {
     val dependencies: java.util.HashSet<SimpleMavenDescriptor> =
-        AppTarget::class.java.getResourceAsStream("/dependencies.txt")?.use {
+        THIS::class.java.getResourceAsStream("/dependencies.txt")?.use {
             val fileStr = String(it.readInputStream())
             fileStr.split("\n").toSet()
         }?.filterNot { it.isBlank() }?.mapTo(HashSet()) { SimpleMavenDescriptor.parseDescription(it)!! }

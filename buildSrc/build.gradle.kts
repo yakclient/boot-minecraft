@@ -5,7 +5,7 @@ import dev.extframework.gradle.common.extFramework
 
 plugins {
     kotlin("jvm") version "2.0.0-Beta1"
-    id("dev.extframework.common") version "1.0.7"
+    id("dev.extframework.common") version "1.0.31"
 }
 
 repositories {
@@ -26,6 +26,6 @@ common {
 }
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(8))
     }
 }

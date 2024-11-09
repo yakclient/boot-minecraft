@@ -34,7 +34,7 @@ internal class AppTarget(
                         (minecraftNode.libraries.map { it.archive } + minecraftNode.archive)
                             .mapTo(ArrayList()) { ArchiveSourceProvider(it) }
                     ),
-                    parent = ClassLoader.getPlatformClassLoader(),
+                    parent = ClassLoader.getSystemClassLoader(),
                 )
             )
         }

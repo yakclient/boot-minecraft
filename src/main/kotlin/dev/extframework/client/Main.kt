@@ -3,18 +3,20 @@ package dev.extframework.client
 import BootLoggerFactory
 import com.durganmcbroom.jobs.*
 import dev.extframework.boot.archive.*
+import dev.extframework.boot.loader.*
 import dev.extframework.common.util.resolve
 import dev.extframework.extloader.InternalExtensionEnvironment
 import dev.extframework.extloader.extension.DefaultExtensionResolver
 import dev.extframework.extloader.extension.partition.DefaultPartitionResolver
 import dev.extframework.extloader.initExtensions
-import dev.extframework.internal.api.environment.*
-import dev.extframework.internal.api.extension.*
+import dev.extframework.internal.api.environment.ExtensionEnvironment
+import dev.extframework.internal.api.environment.extract
 import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
 import dev.extframework.internal.api.extension.partition.artifact.PartitionDescriptor
 import dev.extframework.internal.api.target.ApplicationTarget
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.Path
 
 private fun getHomedir(): Path {
     return getMinecraftDir() resolve ".extframework"
@@ -26,7 +28,7 @@ private fun getMinecraftDir(): Path {
 
     return when {
         osName.contains("win") -> {
-            val appData = System.getenv("APPDATA")?.let(Path::of) ?: Path.of(userHome, "AppData", "Roaming")
+            val appData = System.getenv("APPDATA")?.let(::Path) ?: Path(userHome, "AppData", "Roaming")
             appData resolve ".minecraft"
         }
 
@@ -54,6 +56,7 @@ public fun main(args: Array<String>) {
             environment,
             launchContext.launchInfo.extensionDirPath
         )
+
         System.setProperty("mapping.target", launchContext.launchInfo.mappingNS)
         initExtensions(
             launchContext.launchInfo.requests,
@@ -62,10 +65,12 @@ public fun main(args: Array<String>) {
 
         val app = environment[ApplicationTarget].extract().node.handle!!.classloader
 
+
         val mainClass = app.loadClass(
             launchContext.launchInfo.mainClass
         )
 
+        System.err.println("mainClass: $mainClass")
         mainClass.getMethod("main", Array<String>::class.java).invoke(null, launchContext.launchInfo.args)
     }
 }

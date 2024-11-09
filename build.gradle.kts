@@ -9,11 +9,11 @@ plugins {
     java
     application
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("dev.extframework.common") version "1.0.26"
+    id("dev.extframework.common") version "1.0.33"
 }
 
 group = "dev.extframework"
-version = "1.0.5-BETA"
+version = "1.0.6-BETA"
 
 repositories {
     mavenCentral()
@@ -43,11 +43,11 @@ dependencies {
     toolingApi()
     jobs()
     archives()
-    boot(version = "3.2.4-SNAPSHOT")
+    boot()
     objectContainer()
     artifactResolver(maven = true)
     commonUtil()
-    extLoader(version = "2.1.7-SNAPSHOT")
+    extLoader()
     minecraftBootstrapper()
 
     testImplementation(kotlin("test"))
@@ -135,7 +135,5 @@ common {
 }
 
 java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
+    toolchain.languageVersion.set(JavaLanguageVersion.of(8))
 }

@@ -17,12 +17,16 @@ import dev.extframework.common.util.immutableLateInit
 import dev.extframework.common.util.resolve
 import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
 import dev.extframework.internal.api.extension.artifact.ExtensionRepositorySettings
+//import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
+//import dev.extframework.internal.api.extension.artifact.ExtensionRepositorySettings
 import dev.extframework.minecraft.bootstrapper.MinecraftNode
 import dev.extframework.minecraft.bootstrapper.MinecraftProviderFinder
 import dev.extframework.minecraft.bootstrapper.MinecraftProviderRemoteLookup
 import dev.extframework.minecraft.bootstrapper.loadMinecraft
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.Path
 
 internal class LaunchInfo(
     val args: Array<String>,
@@ -158,8 +162,8 @@ internal class ProductionCommand(
                 handle.runtimeInfo.mainClass,
                 handle,
                 extensions.zip(repositories).toMap(),
-                Path.of(handle.archive.location),
-                Path.of(extensionDir),
+                Paths.get(handle.archive.location),
+                Path(extensionDir),
                 mappingNamespace,
             )
 

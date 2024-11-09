@@ -14,7 +14,6 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
-import java.util.HexFormat
 
 abstract class GenerateProfileTask : DefaultTask() {
     @get:Input
@@ -71,7 +70,7 @@ abstract class GenerateProfileTask : DefaultTask() {
                     pair.first.sha512,
                     pair.first.md5,
                     descriptor.name,
-                    (pair.second.layout as? SimpleMavenDefaultLayout)?.url ?: mavenLocal // FIXME
+                    (pair.second.layout as? SimpleMavenDefaultLayout)?.location ?: mavenLocal // FIXME
                 )
             }
 
