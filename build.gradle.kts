@@ -9,16 +9,16 @@ plugins {
     java
     application
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("dev.extframework.common") version "1.0.33"
+    id("dev.extframework.common") version "1.0.36"
 }
 
 group = "dev.extframework"
-version = "1.0.6-BETA"
+version = "1.0.7-BETA"
 
 repositories {
     mavenCentral()
-    extFramework()
     mavenLocal()
+    extFramework()
 }
 
 application {

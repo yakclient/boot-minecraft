@@ -9,11 +9,11 @@ import dev.extframework.extloader.InternalExtensionEnvironment
 import dev.extframework.extloader.extension.DefaultExtensionResolver
 import dev.extframework.extloader.extension.partition.DefaultPartitionResolver
 import dev.extframework.extloader.initExtensions
-import dev.extframework.internal.api.environment.ExtensionEnvironment
-import dev.extframework.internal.api.environment.extract
-import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
-import dev.extframework.internal.api.extension.partition.artifact.PartitionDescriptor
-import dev.extframework.internal.api.target.ApplicationTarget
+import dev.extframework.tooling.api.environment.ExtensionEnvironment
+import dev.extframework.tooling.api.environment.extract
+import dev.extframework.tooling.api.extension.artifact.ExtensionDescriptor
+import dev.extframework.tooling.api.extension.partition.artifact.PartitionDescriptor
+import dev.extframework.tooling.api.target.ApplicationTarget
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.Path
@@ -70,7 +70,6 @@ public fun main(args: Array<String>) {
             launchContext.launchInfo.mainClass
         )
 
-        System.err.println("mainClass: $mainClass")
         mainClass.getMethod("main", Array<String>::class.java).invoke(null, launchContext.launchInfo.args)
     }
 }

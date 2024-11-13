@@ -5,9 +5,9 @@ import dev.extframework.archives.zip.classLoaderToArchive
 import dev.extframework.boot.archive.ArchiveAccessTree
 import dev.extframework.boot.archive.ClassLoadedArchiveNode
 import dev.extframework.boot.loader.*
-import dev.extframework.internal.api.target.ApplicationDescriptor
-import dev.extframework.internal.api.target.ApplicationTarget
 import dev.extframework.minecraft.bootstrapper.MinecraftNode
+import dev.extframework.tooling.api.target.ApplicationDescriptor
+import dev.extframework.tooling.api.target.ApplicationTarget
 import java.nio.file.Path
 
 internal class AppTarget(

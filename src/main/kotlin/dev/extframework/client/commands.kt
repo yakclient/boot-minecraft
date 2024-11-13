@@ -1,5 +1,7 @@
 package dev.extframework.client
 
+//import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
+//import dev.extframework.internal.api.extension.artifact.ExtensionRepositorySettings
 import BootLoggerFactory
 import com.durganmcbroom.artifact.resolver.simple.maven.SimpleMavenDescriptor
 import com.durganmcbroom.artifact.resolver.simple.maven.SimpleMavenRepositorySettings
@@ -15,14 +17,12 @@ import dev.extframework.boot.loader.*
 import dev.extframework.boot.maven.MavenLikeResolver
 import dev.extframework.common.util.immutableLateInit
 import dev.extframework.common.util.resolve
-import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
-import dev.extframework.internal.api.extension.artifact.ExtensionRepositorySettings
-//import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
-//import dev.extframework.internal.api.extension.artifact.ExtensionRepositorySettings
 import dev.extframework.minecraft.bootstrapper.MinecraftNode
 import dev.extframework.minecraft.bootstrapper.MinecraftProviderFinder
 import dev.extframework.minecraft.bootstrapper.MinecraftProviderRemoteLookup
 import dev.extframework.minecraft.bootstrapper.loadMinecraft
+import dev.extframework.tooling.api.extension.artifact.ExtensionDescriptor
+import dev.extframework.tooling.api.extension.artifact.ExtensionRepositorySettings
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
