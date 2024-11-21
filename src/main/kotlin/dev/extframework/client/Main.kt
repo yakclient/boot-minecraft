@@ -65,7 +65,6 @@ public fun main(args: Array<String>) {
 
         val app = environment[ApplicationTarget].extract().node.handle!!.classloader
 
-
         val mainClass = app.loadClass(
             launchContext.launchInfo.mainClass
         )

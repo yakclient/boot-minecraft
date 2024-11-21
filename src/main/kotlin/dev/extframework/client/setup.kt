@@ -1,8 +1,11 @@
 package dev.extframework.client
 
-import com.durganmcbroom.artifact.resolver.ArtifactMetadata
+import com.durganmcbroom.artifact.resolver.*
 import com.durganmcbroom.artifact.resolver.simple.maven.SimpleMavenDescriptor
+import com.durganmcbroom.jobs.FailingJob
 import com.durganmcbroom.jobs.Job
+import com.durganmcbroom.jobs.async.AsyncJob
+import com.durganmcbroom.jobs.async.asyncJob
 import com.durganmcbroom.jobs.job
 import dev.extframework.boot.archive.*
 import dev.extframework.boot.audit.Auditors
@@ -13,9 +16,14 @@ import dev.extframework.boot.dependency.DependencyTypeContainer
 import dev.extframework.boot.maven.MavenConstraintNegotiator
 import dev.extframework.boot.maven.MavenDependencyResolver
 import dev.extframework.boot.maven.MavenResolverProvider
+import dev.extframework.boot.monad.Tagged
+import dev.extframework.boot.monad.Tree
 import dev.extframework.boot.monad.removeIf
+import dev.extframework.boot.monad.tag
+import dev.extframework.boot.util.typeOf
 import dev.extframework.common.util.readInputStream
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 
 internal fun setupExtraAuditors(
@@ -61,34 +69,70 @@ internal fun setupArchiveGraph(
     path: Path,
     packagedDependencies: Set<SimpleMavenDescriptor>,
 ): ArchiveGraph {
+    val primordial = PrimordialNodeResolver()
+
     val archiveGraph = DefaultArchiveGraph(
         path,
-        packagedDependencies.associateByTo(HashMap()) {
-            BasicDependencyNode(it, null,
-                object : ArchiveAccessTree {
-                    override val descriptor: ArtifactMetadata.Descriptor = it
-                    override val targets: List<ArchiveTarget> = listOf()
-                }
-            )
-        } as MutableMap<ArtifactMetadata.Descriptor, ArchiveNode<*>>
+//        packagedDependencies.associateWithTo(HashMap()) {
+//            BasicDependencyNode(it, null,
+//                object : ArchiveAccessTree {
+//                    override val descriptor: ArtifactMetadata.Descriptor = it
+//                    override val targets: List<ArchiveTarget> = listOf()
+//                }
+//            ).tag(
+//                primordial
+//            )
+//        }
     )
+
+    archiveGraph.registerResolver(primordial)
 
     return archiveGraph
 }
 
-internal fun setupDependencyTypes(
-    archiveGraph: ArchiveGraph,
-    auditors: Auditors,
-): DependencyTypeContainer {
-    val maven = object : MavenDependencyResolver(
-        parentClassLoader = ClassLoader.getSystemClassLoader(),
-    ) {
-        override val auditors: Auditors
-            get() = auditors
+internal class PrimordialNodeResolver :
+    ArchiveNodeResolver<ArtifactMetadata.Descriptor, ArtifactRequest<ArtifactMetadata.Descriptor>, BasicDependencyNode<ArtifactMetadata.Descriptor>, RepositorySettings, ArtifactMetadata<ArtifactMetadata.Descriptor, *>> {
+    override val metadataType: Class<ArtifactMetadata<ArtifactMetadata.Descriptor, *>> = typeOf()
+    override val name: String = "primordial"
+    override val nodeType: Class<in BasicDependencyNode<ArtifactMetadata.Descriptor>> = typeOf()
+
+    override fun deserializeDescriptor(
+        descriptor: Map<String, String>,
+        trace: ArchiveTrace
+    ): Result<ArtifactMetadata.Descriptor> {
+        return Result.failure(ArchiveException(trace, "Operation not supported"))
     }
 
-    val dependencyTypes = DependencyTypeContainer(archiveGraph)
-    dependencyTypes.register("simple-maven", MavenResolverProvider(maven))
+    override fun serializeDescriptor(descriptor: ArtifactMetadata.Descriptor): Map<String, String> {
+        return mapOf()
+    }
 
-    return dependencyTypes
+    override fun pathForDescriptor(
+        descriptor: ArtifactMetadata.Descriptor,
+        classifier: String,
+        type: String
+    ): Path {
+        return Path("")
+    }
+
+    override fun load(
+        data: ArchiveData<ArtifactMetadata.Descriptor, CachedArchiveResource>,
+        accessTree: ArchiveAccessTree,
+        helper: ResolutionHelper
+    ): Job<BasicDependencyNode<ArtifactMetadata.Descriptor>> {
+        return FailingJob { ArchiveException(helper.trace, "Operation not supported") }
+    }
+
+    override fun createContext(settings: RepositorySettings): ResolutionContext<RepositorySettings, ArtifactRequest<ArtifactMetadata.Descriptor>, ArtifactMetadata<ArtifactMetadata.Descriptor, *>> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun cache(
+        artifact: Artifact<ArtifactMetadata<ArtifactMetadata.Descriptor, *>>,
+        helper: CacheHelper<ArtifactMetadata.Descriptor>
+    ): AsyncJob<Tree<Tagged<IArchive<*>, ArchiveNodeResolver<*, *, *, *, *>>>> = asyncJob {
+        throw ArchiveException(helper.trace, "Operation not supported")
+    }
 }
+
+
