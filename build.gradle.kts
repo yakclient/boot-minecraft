@@ -10,13 +10,13 @@ plugins {
     java
     application
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("dev.extframework.common") version "1.0.38"
+    id("dev.extframework.common") version "1.0.39"
 
     id("me.champeau.mrjar") version "0.1.1"
 }
 
 group = "dev.extframework"
-version = "1.0.10-BETA"
+version = "1.0.11-BETA"
 
 repositories {
     mavenCentral()
