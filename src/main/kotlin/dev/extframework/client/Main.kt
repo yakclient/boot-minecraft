@@ -47,10 +47,7 @@ public fun main(args: Array<String>) {
             getHomedir(),
             launchContext.archiveGraph,
             launchContext.dependencyTypes,
-            AppTarget(
-                launchContext.launchInfo.minecraftNode,
-                launchContext.launchInfo.minecraftPath
-            )
+            launchContext.launchInfo.app
         )
         environment += ClientExtensionResolver(
             environment,
