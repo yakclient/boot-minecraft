@@ -1,7 +1,5 @@
 package dev.extframework.client
 
-//import dev.extframework.internal.api.extension.artifact.ExtensionDescriptor
-//import dev.extframework.internal.api.extension.artifact.ExtensionRepositorySettings
 import BootLoggerFactory
 import com.durganmcbroom.artifact.resolver.simple.maven.SimpleMavenDescriptor
 import com.durganmcbroom.artifact.resolver.simple.maven.SimpleMavenRepositorySettings
@@ -27,10 +25,12 @@ import dev.extframework.tooling.api.target.ApplicationTarget
 import java.nio.file.Path
 import kotlin.io.path.Path
 
+
+public const val CP_SPLIT_PATH: String = ";"
+
 internal class LaunchInfo(
     val args: Array<String>,
     val mainClass: String,
-//    val minecraftNode: MinecraftNode,
 
     val requests: Map<ExtensionDescriptor, ExtensionRepositorySettings>,
     val app: ApplicationTarget,
@@ -225,8 +225,9 @@ internal class ProductionCommand(
             }
 
             val gameDir = Path(gameDir.require("--gameDir"))
+
             RequiredGameInfo(
-                ClasspathApp(cp.split(":").map(::Path), version, gameDir),
+                ClasspathApp(cp.split(CP_SPLIT_PATH).map(::Path), version, gameDir),
                 mainClass.require("--main-class"),
                 gameDir,
                 Path(assetsDir.require("--assetsDir")),
