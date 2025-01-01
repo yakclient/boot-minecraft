@@ -10,17 +10,16 @@ plugins {
     java
     application
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("dev.extframework.common") version "1.0.40"
+    id("dev.extframework.common") version "1.0.44"
 
     id("me.champeau.mrjar") version "0.1.1"
 }
 
 group = "dev.extframework"
-version = "1.0.12-BETA"
+version = "1.1-BETA"
 
 repositories {
     mavenCentral()
-    mavenLocal()
     extFramework()
 }
 
@@ -57,7 +56,8 @@ dependencies {
     artifactResolver(maven = true)
     commonUtil()
     extLoader()
-    minecraftBootstrapper()
+    coreMcApi()
+//    minecraftBootstrapper()
 
     implementation("dev.extframework:boot:$bootVersion:jdk11")
     implementation("dev.extframework:archives:$ARCHIVES_VERSION:jdk11")

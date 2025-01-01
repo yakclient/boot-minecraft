@@ -38,7 +38,13 @@ private fun getMinecraftDir(): Path {
 }
 
 public fun main(args: Array<String>) {
-    val command = ProductionCommand(getMinecraftDir(), getHomedir()).apply { main(args) }
+    if (!args.contains(":")) {
+        System.err.println("To supply arguments to Minecraft please separate program args and MC args with a ':'. Ie `./<command> --program-arg1 --program-arg2 : --mc-arg1 --mc-arg2`")
+    }
+
+    val (programArgs, gameArgs) = args.splitAt(":")
+
+    val command = ProductionCommand(getMinecraftDir(), getHomedir()).apply { main(programArgs) }
 
     val launchContext = command.launchContext
 
@@ -66,8 +72,25 @@ public fun main(args: Array<String>) {
             launchContext.launchInfo.mainClass
         )
 
-        mainClass.getMethod("main", Array<String>::class.java).invoke(null, launchContext.launchInfo.args)
+        mainClass.getMethod("main", Array<String>::class.java).invoke(null, gameArgs)
     }
+}
+
+private fun Array<String>.splitAt(item: String): Pair<Array<String>, Array<String>> {
+    val index = indexOf(item)
+
+    val arr1 = mutableListOf<String>()
+    val arr2 = mutableListOf<String>()
+
+    withIndex().forEach { (i, item) ->
+        if (i < index) {
+            arr1.add(item)
+        } else if (i > index) {
+            arr2.add(item)
+        }
+    }
+
+    return arr1.toTypedArray() to arr2.toTypedArray()
 }
 
 private class ClientExtensionResolver(
