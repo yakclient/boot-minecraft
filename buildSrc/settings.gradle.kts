@@ -6,6 +6,3 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-
-rootProject.name = "client"
-

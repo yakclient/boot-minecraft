@@ -1,163 +1,192 @@
-plugins {
-    kotlin("jvm") version "1.8.20"
-    id("maven-publish")
-    id("org.jetbrains.dokka") version "1.6.0"
-    application
+import dev.extframework.gradle.common.*
+import dev.extframework.gradle.common.dm.artifactResolver
+import dev.extframework.gradle.common.dm.jobs
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+plugins {
+    kotlin("jvm") version "2.0.0"
+    id("maven-publish")
+    id("org.jetbrains.dokka") version "1.9.10"
+    java
+    application
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("dev.extframework.common") version "1.0.44"
+
+    id("me.champeau.mrjar") version "0.1.1"
 }
 
-version = "1.0-SNAPSHOT"
+group = "dev.extframework"
+version = "1.1-BETA"
+
+repositories {
+    mavenCentral()
+    extFramework()
+}
 
 application {
-    mainClass.set("net.yakclient.components.minecraft")
-
-    applicationDefaultJvmArgs = listOf(
-        "-Xms512m",
-        "-Xmx4G",
-        "-XstartOnFirstThread",
-    )
+    mainClass = "dev.extframework.client.MainKt"
 }
 
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor(24, "hours")
+kotlin {
+    explicitApi()
 }
+
+tasks.wrapper {
+    gradleVersion = "8.5"
+}
+
+multiRelease {
+    targetVersions(8, 11)
+}
+
+val bootVersion = BOOT_VERSION
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("io.arrow-kt:arrow-core:1.1.2")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("net.yakclient:archives:1.1-SNAPSHOT") {
-        isChanging = true
-    }
-    implementation("net.yakclient:boot:1.0-SNAPSHOT") {
-        exclude(group = "com.durganmcbroom", module = "artifact-resolver")
-        exclude(group = "com.durganmcbroom", module = "artifact-resolver-simple-maven")
-
-        exclude(group = "com.durganmcbroom", module = "artifact-resolver-jvm")
-        exclude(group = "com.durganmcbroom", module = "artifact-resolver-simple-maven-jvm")
-        isChanging = true
-    }
-    implementation("com.durganmcbroom:artifact-resolver:1.0-SNAPSHOT") {
-        isChanging = true
-    }
-    implementation("com.durganmcbroom:artifact-resolver-simple-maven:1.0-SNAPSHOT") {
-        isChanging = true
-    }
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.4")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
-    implementation("net.yakclient:common-util:1.0-SNAPSHOT") {
-        isChanging = true
-    }
+    implementation(kotlin("reflect"))
+    implementation("com.github.ajalt.clikt:clikt:4.4.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+
+    toolingApi()
+    jobs()
+    archives()
+    boot(version = bootVersion)
+    objectContainer()
+    artifactResolver(maven = true)
+    commonUtil()
+    extLoader()
+    coreMcApi()
+//    minecraftBootstrapper()
+
+    implementation("dev.extframework:boot:$bootVersion:jdk11")
+    implementation("dev.extframework:archives:$ARCHIVES_VERSION:jdk11")
+
+
+    "java11Implementation"("dev.extframework:boot:$bootVersion:jdk11")
+    boot(version = bootVersion, configurationName = "java11Implementation")
+    objectContainer(configurationName = "java11Implementation")
+
+
+    testImplementation(kotlin("test"))
 }
 
-task<Jar>("sourcesJar") {
-    archiveClassifier.set("sources")
-    from(sourceSets.main.get().allSource)
-}
 
-task<Jar>("javadocJar") {
-    archiveClassifier.set("javadoc")
-    from(tasks.dokkaJavadoc)
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("prod") {
-            from(components["java"])
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
-
-            artifactId = "boot-minecraft"
-        }
+abstract class ListAllDependencies : DefaultTask() {
+    init {
+        // Define the output file within the build directory
+        val outputFile = project.buildDir.resolve("resources/main/dependencies.txt")
+        outputs.file(outputFile)
     }
-}
 
-allprojects {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "maven-publish")
-    apply(plugin = "org.jetbrains.dokka")
+    @TaskAction
+    fun listDependencies() {
+        val outputFile = project.buildDir.resolve("resources/main/dependencies.txt")
+        // Ensure the directory for the output file exists
+        outputFile.parentFile.mkdirs()
+        // Clear or create the output file
+        outputFile.writeText("")
 
+        val set = HashSet<String>()
 
-    group = "net.yakclient.components"
-
-    repositories {
-        mavenCentral()
-        maven {
-            name = "Durgan McBroom GitHub Packages"
-            url = uri("https://maven.pkg.github.com/durganmcbroom/artifact-resolver")
-            credentials {
-                username = project.findProperty("dm.gpr.user") as? String
-                    ?: throw IllegalArgumentException("Need a Github package registry username!")
-                password = project.findProperty("dm.gpr.key") as? String
-                    ?: throw IllegalArgumentException("Need a Github package registry key!")
+        // Process each configuration that can be resolved
+        project.configurations.filter { it.isCanBeResolved }.forEach { configuration ->
+            println("Processing configuration: ${configuration.name}")
+            try {
+                configuration.resolvedConfiguration.firstLevelModuleDependencies.forEach { dependency ->
+                    collectDependencies(dependency, set)
+                }
+            } catch (e: Exception) {
+                println("Skipping configuration '${configuration.name}' due to resolution errors.")
             }
         }
-        maven {
-            isAllowInsecureProtocol = true
-            url = uri("http://maven.yakclient.net/snapshots")
+
+        set.add("${this.project.group}:minecraft-bootstrapper:${this.project.version}\n")
+
+        set.forEach {
+            outputFile.appendText(it)
         }
     }
+
+    private fun collectDependencies(dependency: ResolvedDependency, set: MutableSet<String>) {
+        set.add("${dependency.moduleGroup}:${dependency.moduleName}:${dependency.moduleVersion}\n")
+        dependency.children.forEach { childDependency ->
+            collectDependencies(childDependency, set)
+        }
+    }
+}
+
+tasks.register<GenerateProfileTask>("generateProfile")
+
+tasks.named<Test>("java11Test") {
+    description = "Runs tests in the java11Test source set"
+    group = "verification"
+
+    testClassesDirs = sourceSets["java11Test"].output.classesDirs
+    classpath = sourceSets["java11Test"].runtimeClasspath
+
+    // Use JUnit 5 if applicable
+    useJUnitPlatform()
+}
+
+
+tasks.named<KotlinCompile>("compileJava11Kotlin") {
+    kotlinJavaToolchain.toolchain.use(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    })
+    kotlinOptions.jvmTarget = "11"
+    kotlinOptions.freeCompilerArgs += "-Xexplicit-api=strict"
+}
+
+tasks.named<JavaCompile>("compileJava11Java") {
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
+}
+
+tasks.named<JavaCompile>("compileJava11TestJava") {
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
+}
+
+// Register the custom task in the project
+val listAllDependencies by tasks.registering(ListAllDependencies::class)
+
+tasks.compileKotlin {
+    dependsOn(listAllDependencies)
+}
+
+tasks.jar {
+//    from(tasks.named("listAllDependencies"))
+}
+
+tasks.shadowJar {
+    from(tasks.named("listAllDependencies"))
+    from(sourceSets["java11"].output) {
+        into("META-INF/versions/11")
+    }
+    manifest {
+        attributes("Multi-Release" to true)
+    }
+
+}
+
+common {
+    defaultJavaSettings()
 
     publishing {
+        publication {
+            withSources()
+            withDokka()
+            artifact(tasks.shadowJar)
+
+            artifactId = "client"
+        }
         repositories {
-            if (project.hasProperty("maven-user") && project.hasProperty("maven-secret")) maven {
-                logger.quiet("Maven user and password found.")
-                val repo = if ((version as String).endsWith("-SNAPSHOT")) "snapshots" else "releases"
-
-                isAllowInsecureProtocol = true
-
-                url = uri("http://maven.yakclient.net/$repo")
-
-                credentials {
-                    username = project.findProperty("maven-user") as String
-                    password = project.findProperty("maven-secret") as String
-                }
-                authentication {
-                    create<BasicAuthentication>("basic")
-                }
-            } else logger.quiet("Maven user and password not found.")
+            extFramework(credentials = propertyCredentialProvider, type = RepositoryType.RELEASES)
         }
     }
+}
 
-    kotlin {
-        explicitApi()
-    }
-
-    dependencies {
-        implementation(kotlin("stdlib"))
-        implementation(kotlin("reflect"))
-        testImplementation(kotlin("test"))
-    }
-
-    tasks.compileKotlin {
-        destinationDirectory.set(tasks.compileJava.get().destinationDirectory.asFile.get())
-
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
-
-    tasks.compileTestKotlin {
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
-
-    tasks.test {
-        useJUnitPlatform()
-    }
-
-    tasks.compileJava {
-        targetCompatibility = "17"
-        sourceCompatibility = "17"
-    }
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(17))
-        }
-    }
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(8))
 }
